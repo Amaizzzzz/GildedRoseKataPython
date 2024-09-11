@@ -1,0 +1,26 @@
+# gitignore samples from: https://www.atlassian.com/git/tutorials/saving-changes/gitignore
+# Dependency caches
+node_modules/
+packages/
+
+# Compiled code
+*.o
+*.pyc
+*.class
+
+# Build output directories
+bin/
+out/
+target/
+
+# Runtime generated files
+*.log
+*.lock
+*.tmp
+
+# Hidden system files
+.DS_Store
+Thumbs.db
+
+# Personal IDE config files
+.idea/workspace.xml
