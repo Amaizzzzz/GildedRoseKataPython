@@ -11,39 +11,71 @@ class Item:
     def __repr__(self):
         return "%s, %s, %s" % (self.name, self.sell_in, self.quality)
 
+class AgedBrieStrategy:
+    def update_item(self, item):
+        item.sell_in -= 1
+        if item.quality < 50:
+            item.quality += 1
+        if item.sell_in < 0 and item.quality < 50:
+            item.quality += 1
+        item.quality = min(item.quality, 50)  # Cap at 50
 
-class GildedRose(object):
 
-    def __init__(self, items: list[Item]):
-        # DO NOT CHANGE THIS ATTRIBUTE!!!
+class BackstagePassesStrategy:
+    def update_item(self, item):
+        item.sell_in -= 1
+        if item.sell_in < 0:
+            item.quality = 0  # After the concert, quality drops to 0
+        else:
+            if item.quality < 50:
+                item.quality += 1
+            if item.sell_in < 10 and item.quality < 50:
+                item.quality += 1  # Increase by 2 if 10 days or less
+            if item.sell_in < 5 and item.quality < 50:
+                item.quality += 1  # Increase by 3 if 5 days or less
+        item.quality = min(item.quality, 50)  # Cap at 50
+
+
+class ConjuredStrategy:
+    def update_item(self, item):
+        item.sell_in -= 1
+        degrade_rate = 2
+        if item.sell_in < 0:
+            degrade_rate *= 2  # Degrade four times as fast after sell-in
+        item.quality = max(item.quality - degrade_rate, 0)
+
+
+class SulfurasStrategy:
+    def update_item(self, item):
+        # Sulfuras does not change in quality or sell_in
+        pass
+
+
+class NormalItemStrategy:
+    def update_item(self, item):
+        item.sell_in -= 1
+        degrade_rate = 1
+        if item.sell_in < 0:
+            degrade_rate = 2  # Degrade twice as fast after sell-in
+        item.quality = max(item.quality - degrade_rate, 0)
+        item.quality = min(item.quality, 50)  # Ensure quality is capped at 50
+
+
+class GildedRose:
+    def __init__(self, items: list):
         self.items = items
+        self.strategies = {
+            "Aged Brie": AgedBrieStrategy(),
+            "Backstage passes to a TAFKAL80ETC concert": BackstagePassesStrategy(),
+            "Sulfuras, Hand of Ragnaros": SulfurasStrategy(),
+        }
+
+    def get_strategy(self, item):
+        if "Conjured" in item.name:
+            return ConjuredStrategy()
+        return self.strategies.get(item.name, NormalItemStrategy())
 
     def update_quality(self):
         for item in self.items:
-            if item.name != "Aged Brie" and item.name != "Backstage passes to a TAFKAL80ETC concert":
-                if item.quality > 0:
-                    if item.name != "Sulfuras, Hand of Ragnaros":
-                        item.quality = item.quality - 1
-            else:
-                if item.quality < 50:
-                    item.quality = item.quality + 1
-                    if item.name == "Backstage passes to a TAFKAL80ETC concert":
-                        if item.sell_in < 11:
-                            if item.quality < 50:
-                                item.quality = item.quality + 1
-                        if item.sell_in < 6:
-                            if item.quality < 50:
-                                item.quality = item.quality + 1
-            if item.name != "Sulfuras, Hand of Ragnaros":
-                item.sell_in = item.sell_in - 1
-            if item.sell_in < 0:
-                if item.name != "Aged Brie":
-                    if item.name != "Backstage passes to a TAFKAL80ETC concert":
-                        if item.quality > 0:
-                            if item.name != "Sulfuras, Hand of Ragnaros":
-                                item.quality = item.quality - 1
-                    else:
-                        item.quality = item.quality - item.quality
-                else:
-                    if item.quality < 50:
-                        item.quality = item.quality + 1
+            strategy = self.get_strategy(item)
+            strategy.update_item(item)
